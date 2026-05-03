@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import EmployeeService from '../services/employeeService';
 
 const EmployeeList = () => {
   const navigate = useNavigate();
   const [employeeList, setEmployeeList] = useState([]);
 
+  const loadEmployees = () => {
+    EmployeeService.getAllEmployees().then(response => {
+      setEmployeeList(response);
+    }).catch(e => console.error(e));
+  }
+
   useEffect(() => {
-    const storedList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
-    setEmployeeList(storedList);
+    loadEmployees();
   }, []);
 
   const remove = (employee) => {
-    let updatedList = employeeList.filter(emp => emp.id !== employee.id);
-    setEmployeeList(updatedList);
-    localStorage.setItem('EmployeeList', JSON.stringify(updatedList));
+    EmployeeService.deleteEmployee(employee.id).then(() => {
+      loadEmployees();
+    }).catch(e => console.error(e));
   }
 
   const edit = (employee) => {

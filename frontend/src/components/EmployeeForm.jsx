@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Employee from '../models/Employee';
 import { useNavigate, useParams } from 'react-router-dom';
+import EmployeeService from '../services/employeeService';
 
 const EmployeeForm = () => {
   const navigate = useNavigate();
@@ -21,22 +22,22 @@ const EmployeeForm = () => {
 
   useEffect(() => {
     if (id) {
-      let employeeList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
-      let employee = employeeList.find(emp => emp.id.toString() === id);
-      if (employee) {
-        let sDate = new Date(employee._startDate);
-        setEmployeeData({
-          name: employee._name || '',
-          profilePic: employee._profilePic || '',
-          gender: employee._gender || '',
-          department: employee._department || [],
-          salary: employee._salary || 400000,
-          note: employee._note || '',
-          day: sDate.getDate().toString(),
-          month: sDate.toLocaleString('default', { month: 'short' }),
-          year: sDate.getFullYear().toString()
-        });
-      }
+      EmployeeService.getEmployeeById(id).then(employee => {
+        if (employee) {
+          let sDate = new Date(employee.startDate);
+          setEmployeeData({
+            name: employee.name || '',
+            profilePic: employee.profilePic || '',
+            gender: employee.gender || '',
+            department: employee.department || [],
+            salary: employee.salary || 400000,
+            note: employee.note || '',
+            day: sDate.getDate().toString(),
+            month: sDate.toLocaleString('default', { month: 'short' }),
+            year: sDate.getFullYear().toString()
+          });
+        }
+      }).catch(e => setError(e.message));
     }
   }, [id]);
 
@@ -54,32 +55,26 @@ const EmployeeForm = () => {
     setEmployeeData({ ...employeeData, department: deps });
   };
 
-  const save = (event) => {
+  const save = async (event) => {
     event.preventDefault();
     try {
-      let employee = new Employee();
-      employee.id = id ? parseInt(id) : new Date().getTime();
-      employee.name = employeeData.name;
-      employee.profilePic = employeeData.profilePic;
-      employee.gender = employeeData.gender;
-      employee.department = employeeData.department;
-      employee.salary = employeeData.salary;
-      employee.note = employeeData.note;
-
       const dateStr = `${employeeData.month} ${employeeData.day}, ${employeeData.year}`;
-      employee.startDate = new Date(dateStr);
+      let dto = {
+        name: employeeData.name,
+        profilePic: employeeData.profilePic,
+        gender: employeeData.gender,
+        department: employeeData.department,
+        salary: employeeData.salary,
+        note: employeeData.note,
+        startDate: new Date(dateStr).toISOString().split('T')[0]
+      };
 
-      let employeeList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
       if (id) {
-        let index = employeeList.findIndex(emp => emp.id.toString() === id);
-        if (index !== -1) {
-          employeeList[index] = employee;
-        }
+        await EmployeeService.updateEmployee(id, dto);
       } else {
-        employeeList.push(employee);
+        await EmployeeService.createEmployee(dto);
       }
 
-      localStorage.setItem('EmployeeList', JSON.stringify(employeeList));
       alert(id ? 'Employee Updated Successfully' : 'Employee Added Successfully');
       navigate('/');
     } catch (e) {
