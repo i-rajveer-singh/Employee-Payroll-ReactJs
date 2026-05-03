@@ -1,10 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const EmployeeList = () => {
+  const navigate = useNavigate();
+  const [employeeList, setEmployeeList] = useState([]);
+
+  useEffect(() => {
+    const storedList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
+    setEmployeeList(storedList);
+  }, []);
+
+  const remove = (employee) => {
+    // Will be implemented in UC5
+    console.log("Delete clicked for", employee.name);
+  }
+
+  const edit = (employee) => {
+    // Will be implemented in UC5
+    console.log("Edit clicked for", employee.name);
+  }
+
   return (
-    <div className="card">
-      <h2>Employee List</h2>
-      <p>Table of employees will go here.</p>
+    <div className="main-content">
+      <div className="header-content">
+        <div className="emp-detail-text">
+          Employee Details <div className="emp-count">{employeeList.length}</div>
+        </div>
+        <button onClick={() => navigate('/add')} className="add-button">Add User</button>
+      </div>
+
+      <div className="table-main">
+        <table id="table-display" className="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Gender</th>
+              <th>Department</th>
+              <th>Salary</th>
+              <th>Start Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employeeList.map((emp) => (
+              <tr key={emp.id}>
+                <td><img className="profile-list" src={emp.profilePic} alt="" /></td>
+                <td>{emp.name}</td>
+                <td>{emp.gender}</td>
+                <td>
+                  {emp.department && emp.department.map(dept => (
+                    <div className="dept-label" key={dept}>{dept}</div>
+                  ))}
+                </td>
+                <td>₹ {emp.salary}</td>
+                <td>{emp.startDate ? new Date(emp.startDate).toDateString() : ''}</td>
+                <td>
+                  <button onClick={() => remove(emp)}>Delete</button>
+                  <button onClick={() => edit(emp)}>Edit</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
