@@ -11,13 +11,13 @@ const EmployeeList = () => {
   }, []);
 
   const remove = (employee) => {
-    // Will be implemented in UC5
-    console.log("Delete clicked for", employee.name);
+    let updatedList = employeeList.filter(emp => emp.id !== employee.id);
+    setEmployeeList(updatedList);
+    localStorage.setItem('EmployeeList', JSON.stringify(updatedList));
   }
 
   const edit = (employee) => {
-    // Will be implemented in UC5
-    console.log("Edit clicked for", employee.name);
+    navigate(`/edit/${employee.id}`);
   }
 
   return (

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Employee from '../models/Employee';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const EmployeeForm = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [employeeData, setEmployeeData] = useState({
     name: '',
     profilePic: '',
@@ -17,6 +18,27 @@ const EmployeeForm = () => {
   });
 
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (id) {
+      let employeeList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
+      let employee = employeeList.find(emp => emp.id.toString() === id);
+      if (employee) {
+        let sDate = new Date(employee._startDate);
+        setEmployeeData({
+          name: employee._name || '',
+          profilePic: employee._profilePic || '',
+          gender: employee._gender || '',
+          department: employee._department || [],
+          salary: employee._salary || 400000,
+          note: employee._note || '',
+          day: sDate.getDate().toString(),
+          month: sDate.toLocaleString('default', { month: 'short' }),
+          year: sDate.getFullYear().toString()
+        });
+      }
+    }
+  }, [id]);
 
   const changeValue = (event) => {
     setEmployeeData({ ...employeeData, [event.target.name]: event.target.value });
@@ -36,7 +58,7 @@ const EmployeeForm = () => {
     event.preventDefault();
     try {
       let employee = new Employee();
-      employee.id = new Date().getTime();
+      employee.id = id ? parseInt(id) : new Date().getTime();
       employee.name = employeeData.name;
       employee.profilePic = employeeData.profilePic;
       employee.gender = employeeData.gender;
@@ -47,14 +69,18 @@ const EmployeeForm = () => {
       const dateStr = `${employeeData.month} ${employeeData.day}, ${employeeData.year}`;
       employee.startDate = new Date(dateStr);
 
-      let employeeList = JSON.parse(localStorage.getItem('EmployeeList'));
-      if (employeeList) {
-        employeeList.push(employee);
-        localStorage.setItem('EmployeeList', JSON.stringify(employeeList));
+      let employeeList = JSON.parse(localStorage.getItem('EmployeeList')) || [];
+      if (id) {
+        let index = employeeList.findIndex(emp => emp.id.toString() === id);
+        if (index !== -1) {
+          employeeList[index] = employee;
+        }
       } else {
-        localStorage.setItem('EmployeeList', JSON.stringify([employee]));
+        employeeList.push(employee);
       }
-      alert('Employee Added Successfully');
+
+      localStorage.setItem('EmployeeList', JSON.stringify(employeeList));
+      alert(id ? 'Employee Updated Successfully' : 'Employee Added Successfully');
       navigate('/');
     } catch (e) {
       setError(e.message);
@@ -91,11 +117,11 @@ const EmployeeForm = () => {
           <label className="label text" htmlFor="profilePic">Profile image</label>
           <div className="profile-radio-content">
             <label>
-              <input type="radio" id="profile1" name="profilePic" value="../assets/profile-images/Ellipse -1.png" onChange={changeValue} required />
+              <input type="radio" id="profile1" name="profilePic" value="../assets/profile-images/Ellipse -1.png" checked={employeeData.profilePic === '../assets/profile-images/Ellipse -1.png'} onChange={changeValue} required />
               <img className="profile" id="image1" src="" alt="1" />
             </label>
             <label>
-              <input type="radio" id="profile2" name="profilePic" value="../assets/profile-images/Ellipse -2.png" onChange={changeValue} required />
+              <input type="radio" id="profile2" name="profilePic" value="../assets/profile-images/Ellipse -2.png" checked={employeeData.profilePic === '../assets/profile-images/Ellipse -2.png'} onChange={changeValue} required />
               <img className="profile" id="image2" src="" alt="2" />
             </label>
           </div>
@@ -104,9 +130,9 @@ const EmployeeForm = () => {
         <div className="row-content">
           <label className="label text" htmlFor="gender">Gender</label>
           <div>
-            <input type="radio" id="male" name="gender" value="Male" onChange={changeValue} required />
+            <input type="radio" id="male" name="gender" value="Male" checked={employeeData.gender === 'Male'} onChange={changeValue} required />
             <label className="text" htmlFor="male">Male</label>
-            <input type="radio" id="female" name="gender" value="Female" onChange={changeValue} required />
+            <input type="radio" id="female" name="gender" value="Female" checked={employeeData.gender === 'Female'} onChange={changeValue} required />
             <label className="text" htmlFor="female">Female</label>
           </div>
         </div>
@@ -116,7 +142,7 @@ const EmployeeForm = () => {
           <div>
             {['HR', 'Sales', 'Finance', 'Engineer', 'Others'].map(dep => (
               <label key={dep}>
-                <input type="checkbox" name="department" value={dep} onChange={handleCheckbox} />
+                <input type="checkbox" name="department" value={dep} checked={employeeData.department.includes(dep)} onChange={handleCheckbox} />
                 {dep}
               </label>
             ))}
@@ -152,7 +178,7 @@ const EmployeeForm = () => {
         <div className="buttonParent">
           <button type="button" className="resetButton button cancelButton" onClick={() => navigate('/')}>Cancel</button>
           <div className="submit-reset">
-            <button type="submit" className="button submitButton" id="submitButton">Submit</button>
+            <button type="submit" className="button submitButton" id="submitButton">{id ? 'Update' : 'Submit'}</button>
             <button type="reset" className="resetButton button">Reset</button>
           </div>
         </div>
